@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+require 'savon'
+require 'savon-multipart'
+
 module GusBir1
   class Client
     SESSION_TIMEOUT = 3600
-    attr_accessor :production, :client_key, :log_level, :logging
+    attr_accessor :production, :client_key, :log_level, :logging, :ssl_version, :adapter
 
     def service_status
       v = get_value(Constants::PARAM_PARAM_NAME => Constants::PARAM_SERVICE_STATUS)
@@ -149,7 +152,9 @@ module GusBir1
         multipart: true,
         log_level: @log_level,
         log: @logging,
-        proxy: ENV['GUS_BIR_PROXY_URL']
+        proxy: ENV['GUS_BIR_PROXY_URL'],
+        ssl_version: ssl_version,
+        adapter: adapter
       }
       if defined?(@sid) && @sid.nil? == false
         params.merge!({headers: { sid: @sid } })
@@ -165,7 +170,13 @@ module GusBir1
     def savon_api_client
       @savon_api_client ||= GusBir1::SavonApiClient.new
     end
+
+    def adapter
+      @adapter || :excon
+    end
+
+    def ssl_version
+      @ssl_version || :TLSv1_2
+    end
   end
 end
-require 'savon'
-require 'savon-multipart'
